@@ -27,11 +27,16 @@ async fn handler_proxy(State(state): State<AppState>, request: Request) -> Respo
         true => "https://",
         false => "http://",
     };
-    let url = format!("{}{}{}", prefix, host, path);
+    let query = match request.uri().query() {
+        Some(q) => format!("?{}", q),
+        None => "".to_string(),
+    };
+    let url = format!("{}{}{}{}", prefix, host, path, query);
     let method = request.method().as_str().as_bytes();
     let headers = request.headers();
 
     let mut r = client.request(Method::from_bytes(method).unwrap(), &url);
+
     // Populate headers
     for (name, value) in headers {
         if name == "host" {
@@ -42,10 +47,17 @@ async fn handler_proxy(State(state): State<AppState>, request: Request) -> Respo
         }
     }
 
+    // Populate body
+
     let response = r.send().await;
     match response {
         Ok(res) => {
-            info!("{} {}", request.method().as_str(), path);
+            info!(
+                "{} {} {}",
+                request.method().as_str(),
+                path,
+                res.status().as_u16()
+            );
             build_proxy_response(res).await
         }
         Err(e) => {

@@ -1,8 +1,12 @@
+use std::time::Duration;
+
 use axum::extract::FromRef;
+use axum::http::header::{ACCEPT, AUTHORIZATION};
+use axum::http::Method;
 use axum::Router;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
-use tower_http::cors::CorsLayer;
+use tower_http::cors::{Any, CorsLayer};
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tracing::info;
 use tracing::Level;
@@ -35,7 +39,13 @@ pub async fn run(config: Config) -> Result<()> {
         );
 
     if config.cors {
+        // let cors = CorsLayer::new()
+        //     .allow_origin(Any)
+        //     .allow_headers([AUTHORIZATION])
+        //     .allow_methods([Method::GET, Method::HEAD, Method::POST, Method::PUT, Method::PATCH, Method::DELETE])
+        //     .max_age(Duration::from_secs(10));
         let cors = CorsLayer::permissive();
+
         routes_all = routes_all.layer(cors).to_owned();
     }
 
