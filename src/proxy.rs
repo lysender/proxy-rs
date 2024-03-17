@@ -7,7 +7,7 @@ use axum::{
 };
 use reqwest::{Client, Method, Response as ReqwestResponse};
 use std::str::FromStr;
-use tracing::info;
+use tracing::{error, info};
 
 use crate::run::AppState;
 
@@ -31,8 +31,6 @@ async fn handler_proxy(State(state): State<AppState>, request: Request) -> Respo
     let method = request.method().as_str().as_bytes();
     let headers = request.headers();
 
-    info!("Proxying request to {}", url);
-
     let mut r = client.request(Method::from_bytes(method).unwrap(), &url);
     // Populate headers
     for (name, value) in headers {
@@ -46,11 +44,17 @@ async fn handler_proxy(State(state): State<AppState>, request: Request) -> Respo
 
     let response = r.send().await;
     match response {
-        Ok(res) => build_proxy_response(res).await,
-        Err(e) => Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body(format!("Error: {}", e))
-            .unwrap(),
+        Ok(res) => {
+            info!("{} {}", request.method().as_str(), path);
+            build_proxy_response(res).await
+        }
+        Err(e) => {
+            error!("Error: {}", e);
+            Response::builder()
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                .body(format!("Error: {}", e))
+                .unwrap()
+        }
     }
 }
 

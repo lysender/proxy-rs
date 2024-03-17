@@ -2,6 +2,7 @@ use axum::extract::FromRef;
 use axum::Router;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
+use tower_http::cors::CorsLayer;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
 use tracing::info;
 use tracing::Level;
@@ -21,7 +22,7 @@ pub async fn run(config: Config) -> Result<()> {
         config: config.clone(),
     };
 
-    let routes_all = Router::new()
+    let mut routes_all = Router::new()
         .merge(routes_index(state.clone()))
         .merge(routes_proxy(state.clone()))
         .fallback_service(routes_fallback(state))
@@ -32,6 +33,11 @@ pub async fn run(config: Config) -> Result<()> {
                     .on_response(DefaultOnResponse::new().level(Level::INFO)),
             ),
         );
+
+    if config.cors {
+        let cors = CorsLayer::permissive();
+        routes_all = routes_all.layer(cors).to_owned();
+    }
 
     // Setup the server
     let ip = "127.0.0.1";

@@ -1,5 +1,5 @@
 proxy_target_host = "example.com"
 proxy_target_secure = true
 proxy_target_path = "/api/*rest"
-port = 4200 
+cors = true 
 port = 4200
