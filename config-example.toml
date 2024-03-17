@@ -1,0 +1,3 @@
+proxy_target_host = "https://example.com"
+proxy_target_path = "/api"
+port = 4200 
