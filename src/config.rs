@@ -7,6 +7,7 @@ use toml;
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
     pub proxy_target_host: String,
+    pub proxy_target_secure: bool,
     pub proxy_target_path: String,
     pub port: u16,
 }
