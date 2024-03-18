@@ -7,8 +7,7 @@ use axum::{
     Router,
 };
 use reqwest::{Client, Method as ReqwestMethod, Response as ReqwestResponse};
-use std::{str::FromStr, time::Instant};
-use tracing::{error, info};
+use std::str::FromStr;
 
 use crate::run::AppState;
 
@@ -31,7 +30,6 @@ async fn handler(
     method: Method,
     body: Bytes,
 ) -> Response<String> {
-    let now = Instant::now();
     let client = Client::new();
 
     // Build the incoming request into a reqwest request
@@ -71,31 +69,11 @@ async fn handler(
 
     let response = r.send().await;
     match response {
-        Ok(res) => {
-            let length = res.content_length().unwrap_or(0);
-            info!(
-                "{} {} {} {} ms - {}",
-                method.as_str(),
-                path,
-                res.status().as_u16(),
-                now.elapsed().as_millis(),
-                length,
-            );
-            build_proxy_response(res).await
-        }
-        Err(e) => {
-            error!(
-                "{} {} {} {}ms",
-                method.as_str(),
-                path,
-                e,
-                now.elapsed().as_millis()
-            );
-            Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(format!("Error: {}", e))
-                .unwrap()
-        }
+        Ok(res) => build_proxy_response(res).await,
+        Err(e) => Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(format!("Error: {}", e))
+            .unwrap(),
     }
 }
 
