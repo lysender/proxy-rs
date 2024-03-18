@@ -1,4 +1,5 @@
 use axum::{
+    body::Bytes,
     extract::{OriginalUri, State},
     http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::Response,
@@ -27,7 +28,7 @@ async fn handler(
     OriginalUri(uri): OriginalUri,
     headers: HeaderMap,
     method: Method,
-    body: String,
+    body: Bytes,
 ) -> Response<String> {
     let now = Instant::now();
     let client = Client::new();
@@ -71,11 +72,24 @@ async fn handler(
     match response {
         Ok(res) => {
             let length = res.content_length().unwrap_or(0);
-            info!("{} {} {} {} {}ms", method.as_str(), path, res.status().as_u16(), length, now.elapsed().as_millis());
+            info!(
+                "{} {} {} {} {}ms",
+                method.as_str(),
+                path,
+                res.status().as_u16(),
+                length,
+                now.elapsed().as_millis()
+            );
             build_proxy_response(res).await
         }
         Err(e) => {
-            error!("{} {} {} {}ms", method.as_str(), path, e, now.elapsed().as_millis());
+            error!(
+                "{} {} {} {}ms",
+                method.as_str(),
+                path,
+                e,
+                now.elapsed().as_millis()
+            );
             Response::builder()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
                 .body(format!("Error: {}", e))
