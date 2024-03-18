@@ -4,6 +4,7 @@ use axum::extract::{DefaultBodyLimit, FromRef};
 use axum::Router;
 use tokio::net::TcpListener;
 use tower_http::cors::CorsLayer;
+use tower_http::limit::RequestBodyLimitLayer;
 use tracing::info;
 
 use crate::config::Config;
@@ -25,7 +26,8 @@ pub async fn run(config: Config) -> Result<()> {
         .merge(routes_index(state.clone()))
         .merge(routes_proxy(state.clone()))
         .fallback_service(routes_fallback(state))
-        .layer(DefaultBodyLimit::disa)
+        .layer(DefaultBodyLimit::disable())
+        .layer(RequestBodyLimitLayer::new(800000));
 
     if config.cors {
         let cors = CorsLayer::permissive().max_age(Duration::from_secs(60) * 10);
