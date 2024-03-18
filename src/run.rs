@@ -1,15 +1,10 @@
 use std::time::Duration;
 
-use axum::extract::FromRef;
-use axum::http::header::{ACCEPT, AUTHORIZATION};
-use axum::http::Method;
+use axum::extract::{DefaultBodyLimit, FromRef};
 use axum::Router;
 use tokio::net::TcpListener;
-use tower::ServiceBuilder;
-use tower_http::cors::{Any, CorsLayer};
-use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
+use tower_http::cors::CorsLayer;
 use tracing::info;
-use tracing::Level;
 
 use crate::config::Config;
 use crate::error::Result;
@@ -30,16 +25,10 @@ pub async fn run(config: Config) -> Result<()> {
         .merge(routes_index(state.clone()))
         .merge(routes_proxy(state.clone()))
         .fallback_service(routes_fallback(state))
-        .layer(
-            ServiceBuilder::new().layer(
-                TraceLayer::new_for_http()
-                    .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
-                    .on_response(DefaultOnResponse::new().level(Level::INFO)),
-            ),
-        );
+        .layer(DefaultBodyLimit::disa)
 
     if config.cors {
-        let cors = CorsLayer::very_permissive();
+        let cors = CorsLayer::permissive().max_age(Duration::from_secs(60) * 10);
         routes_all = routes_all.layer(cors);
     }
 

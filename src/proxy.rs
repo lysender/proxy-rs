@@ -1,67 +1,81 @@
 use axum::{
-    extract::{Request, State},
-    http::{HeaderName, HeaderValue, StatusCode},
+    extract::{OriginalUri, State},
+    http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::Response,
-    routing::get,
+    routing::{delete, get, head, patch, post, put},
     Router,
 };
-use reqwest::{Client, Method, Response as ReqwestResponse};
-use std::str::FromStr;
+use reqwest::{Client, Method as ReqwestMethod, Response as ReqwestResponse};
+use std::{str::FromStr, time::Instant};
 use tracing::{error, info};
 
 use crate::run::AppState;
 
 pub fn routes_proxy(state: AppState) -> Router {
     Router::new()
-        .route(state.config.proxy_target_path.as_str(), get(handler_proxy))
+        .route(state.config.proxy_target_path.as_str(), get(handler))
+        .route(state.config.proxy_target_path.as_str(), head(handler))
+        .route(state.config.proxy_target_path.as_str(), post(handler))
+        .route(state.config.proxy_target_path.as_str(), put(handler))
+        .route(state.config.proxy_target_path.as_str(), patch(handler))
+        .route(state.config.proxy_target_path.as_str(), delete(handler))
         .with_state(state)
 }
 
-async fn handler_proxy(State(state): State<AppState>, request: Request) -> Response<String> {
+async fn handler(
+    state: State<AppState>,
+    OriginalUri(uri): OriginalUri,
+    headers: HeaderMap,
+    method: Method,
+    body: String,
+) -> Response<String> {
+    let now = Instant::now();
     let client = Client::new();
 
     // Build the incoming request into a reqwest request
-    let path = request.uri().path();
+    let path = uri.path();
     let host = &state.config.proxy_target_host;
     let prefix = match state.config.proxy_target_secure {
         true => "https://",
         false => "http://",
     };
-    let query = match request.uri().query() {
+    let query = match uri.query() {
         Some(q) => format!("?{}", q),
         None => "".to_string(),
     };
     let url = format!("{}{}{}{}", prefix, host, path, query);
-    let method = request.method().as_str().as_bytes();
-    let headers = request.headers();
 
-    let mut r = client.request(Method::from_bytes(method).unwrap(), &url);
+    let mut r = client.request(
+        ReqwestMethod::from_bytes(method.as_str().as_bytes()).unwrap(),
+        &url,
+    );
 
     // Populate headers
     for (name, value) in headers {
-        if name == "host" {
-            // Change origin host to target host
-            r = r.header("host", &state.config.proxy_target_host);
-        } else {
-            r = r.header(name.as_str(), value.to_str().unwrap());
+        if let Some(name_val) = name {
+            if name_val == "host" {
+                // Change origin host to target host
+                r = r.header("host", &state.config.proxy_target_host);
+            } else {
+                r = r.header(name_val.as_str(), value.to_str().unwrap());
+            }
         }
     }
 
-    // Populate body
+    // Populate body into reqwest request
+    if body.len() > 0 {
+        r = r.body(body);
+    }
 
     let response = r.send().await;
     match response {
         Ok(res) => {
-            info!(
-                "{} {} {}",
-                request.method().as_str(),
-                path,
-                res.status().as_u16()
-            );
+            let length = res.content_length().unwrap_or(0);
+            info!("{} {} {} {} {}ms", method.as_str(), path, res.status().as_u16(), length, now.elapsed().as_millis());
             build_proxy_response(res).await
         }
         Err(e) => {
-            error!("Error: {}", e);
+            error!("{} {} {} {}ms", method.as_str(), path, e, now.elapsed().as_millis());
             Response::builder()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
                 .body(format!("Error: {}", e))
