@@ -13,13 +13,14 @@ use tracing::{error, info};
 use crate::run::AppState;
 
 pub fn routes_proxy(state: AppState) -> Router {
+    let path = state.config.proxy_target_path.as_str();
     Router::new()
-        .route(state.config.proxy_target_path.as_str(), get(handler))
-        .route(state.config.proxy_target_path.as_str(), head(handler))
-        .route(state.config.proxy_target_path.as_str(), post(handler))
-        .route(state.config.proxy_target_path.as_str(), put(handler))
-        .route(state.config.proxy_target_path.as_str(), patch(handler))
-        .route(state.config.proxy_target_path.as_str(), delete(handler))
+        .route(path, get(handler))
+        .route(path, head(handler))
+        .route(path, post(handler))
+        .route(path, put(handler))
+        .route(path, patch(handler))
+        .route(path, delete(handler))
         .with_state(state)
 }
 
@@ -73,12 +74,12 @@ async fn handler(
         Ok(res) => {
             let length = res.content_length().unwrap_or(0);
             info!(
-                "{} {} {} {} {}ms",
+                "{} {} {} {} ms {}",
                 method.as_str(),
                 path,
                 res.status().as_u16(),
+                now.elapsed().as_millis(),
                 length,
-                now.elapsed().as_millis()
             );
             build_proxy_response(res).await
         }
