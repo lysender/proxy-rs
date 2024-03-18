@@ -74,7 +74,7 @@ async fn handler(
         Ok(res) => {
             let length = res.content_length().unwrap_or(0);
             info!(
-                "{} {} {} {} ms {}",
+                "{} {} {} {} ms - {}",
                 method.as_str(),
                 path,
                 res.status().as_u16(),
