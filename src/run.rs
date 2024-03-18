@@ -26,8 +26,8 @@ pub async fn run(config: Config) -> Result<()> {
         .merge(routes_index(state.clone()))
         .merge(routes_proxy(state.clone()))
         .fallback_service(routes_fallback(state))
-        .layer(DefaultBodyLimit::disable())
-        .layer(RequestBodyLimitLayer::new(800000));
+        .layer(DefaultBodyLimit::max(8000000))
+        .layer(RequestBodyLimitLayer::new(8000000));
 
     if config.cors {
         let cors = CorsLayer::permissive().max_age(Duration::from_secs(60) * 10);
