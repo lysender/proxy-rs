@@ -1,6 +1,7 @@
 targets = [
     { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1" },
-    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets" }
+    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets" },
+    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main" },
 ]
 
 cors = true 
