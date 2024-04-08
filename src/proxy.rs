@@ -1,5 +1,5 @@
 use axum::{
-    body::Bytes,
+    body::{Body, Bytes},
     debug_handler,
     extract::{OriginalUri, State},
     http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
@@ -31,7 +31,7 @@ async fn handler(
     headers: HeaderMap,
     method: Method,
     body: Bytes,
-) -> Response<String> {
+) -> Response<Body> {
     let client = Client::new();
 
     // Build the incoming request into a reqwest request
@@ -74,12 +74,12 @@ async fn handler(
         Ok(res) => build_proxy_response(res).await,
         Err(e) => Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body(format!("Error: {}", e))
+            .body(Body::from(format!("Error: {}", e)))
             .unwrap(),
     }
 }
 
-async fn build_proxy_response(res: ReqwestResponse) -> Response<String> {
+async fn build_proxy_response(res: ReqwestResponse) -> Response<Body> {
     let mut r = Response::builder().status(res.status().as_u16());
 
     // Inject headers from the remote response
@@ -89,6 +89,6 @@ async fn build_proxy_response(res: ReqwestResponse) -> Response<String> {
         r = r.header(header_name, header_value);
     }
 
-    let body = res.text().await.unwrap();
-    r.body(body).unwrap()
+    let body = res.bytes().await.unwrap();
+    r.body(Body::from(body)).unwrap()
 }
