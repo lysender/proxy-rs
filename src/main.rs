@@ -11,7 +11,7 @@ mod run;
 async fn main() {
     // Set the RUST_LOG, if it hasn't been explicitly defined
     if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "api_proxy=info,tower_http=info")
+        std::env::set_var("RUST_LOG", "proxy=info,tower_http=info")
     }
 
     // tracing_subscriber::fmt::init();
