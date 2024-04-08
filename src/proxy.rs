@@ -122,6 +122,6 @@ async fn build_proxy_response(res: ReqwestResponse) -> Response<Body> {
         r = r.header(header_name, header_value);
     }
 
-    let body = res.bytes().await.unwrap();
-    r.body(Body::from(body)).unwrap()
+    let stream = res.bytes_stream();
+    r.body(Body::from_stream(stream)).unwrap()
 }
