@@ -1,5 +1,6 @@
 use axum::{
     body::Bytes,
+    debug_handler,
     extract::{OriginalUri, State},
     http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::Response,
@@ -23,6 +24,7 @@ pub fn routes_proxy(state: AppState) -> Router {
         .with_state(state)
 }
 
+#[debug_handler]
 async fn handler(
     state: State<AppState>,
     OriginalUri(uri): OriginalUri,
