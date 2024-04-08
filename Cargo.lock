@@ -77,11 +77,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum",
- "axum-macros",
  "clap",
  "reqwest",
  "serde",
- "serde_json",
  "tokio",
  "toml",
  "tower",

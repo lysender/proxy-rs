@@ -1,13 +1,12 @@
 use axum::{
     body::{Body, Bytes},
-    debug_handler,
     extract::{OriginalUri, State},
     http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::Response,
     routing::{delete, get, head, patch, post, put},
     Router,
 };
-use reqwest::{Client, Method as ReqwestMethod, Response as ReqwestResponse};
+use reqwest::{Method as ReqwestMethod, Response as ReqwestResponse};
 use std::str::FromStr;
 
 use crate::{
@@ -49,7 +48,6 @@ fn default_handler(path: &str) -> Response<Body> {
     }
 }
 
-#[debug_handler]
 async fn handler(
     state: State<AppState>,
     OriginalUri(uri): OriginalUri,
@@ -64,7 +62,7 @@ async fn handler(
     };
 
     // Forward request to target
-    let client = Client::new();
+    let client = state.client.clone();
 
     // Build the incoming request into a reqwest request
     let mut path = uri.path().to_string();

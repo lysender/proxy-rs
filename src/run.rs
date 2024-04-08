@@ -1,7 +1,9 @@
+use std::sync::Arc;
 use std::time::Duration;
 
 use axum::extract::{DefaultBodyLimit, FromRef};
 use axum::Router;
+use reqwest::Client;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
@@ -16,11 +18,13 @@ use crate::proxy::routes_proxy;
 #[derive(Clone, FromRef)]
 pub struct AppState {
     pub config: Config,
+    pub client: Arc<Client>,
 }
 
 pub async fn run(config: Config) -> Result<()> {
     let state = AppState {
         config: config.clone(),
+        client: Arc::new(Client::new()),
     };
 
     let mut routes_all = Router::new()
