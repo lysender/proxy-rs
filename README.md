@@ -22,6 +22,7 @@ targets = [
     { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1" },
     { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets" },
     { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main" },
+    { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/" },
 ]
 
 cors = true 
@@ -34,6 +35,8 @@ Resulting in the following proxy configuration:
 http://localhost:4200/api/foo/bar -> https://example.com/api/v1/foo/bar
 http://localhost:4200/assets/img/angular.jpg -> https://example2.com/static/assets/img/angular.jpg
 http://localhost:4200/webhooks/stripe -> http://localhost:3000/webhooks/main/stripe
+http://localhost:4200/ -> http://localhost:4200/
+http://localhost:4200/any/path -> http://localhost:4200/any/path
 ```
 
 ## Running
