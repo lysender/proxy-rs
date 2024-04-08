@@ -3,7 +3,7 @@ use axum::{
     extract::{OriginalUri, State},
     http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::Response,
-    routing::{delete, get, head, patch, post, put},
+    routing::any,
     Router,
 };
 use reqwest::{Method as ReqwestMethod, Response as ReqwestResponse};
@@ -15,14 +15,10 @@ use crate::{
 };
 
 pub fn routes_proxy(state: AppState) -> Router {
+    // Route root and fallback to the same proxy handler
     Router::new()
-        .route("/*rest", get(handler))
-        .route("/*rest", head(handler))
-        .route("/*rest", post(handler))
-        .route("/*rest", put(handler))
-        .route("/*rest", patch(handler))
-        .route("/*rest", delete(handler))
-        .route("/", get(handler))
+        .route("/", any(proxy_handler))
+        .fallback(any(proxy_handler))
         .with_state(state)
 }
 
@@ -48,7 +44,7 @@ fn default_handler(path: &str) -> Response<Body> {
     }
 }
 
-async fn handler(
+async fn proxy_handler(
     state: State<AppState>,
     OriginalUri(uri): OriginalUri,
     headers: HeaderMap,
@@ -122,6 +118,8 @@ async fn build_proxy_response(res: ReqwestResponse) -> Response<Body> {
         r = r.header(header_name, header_value);
     }
 
+    // Stream target response into the response body
+    // instead of loading them all into memory
     let stream = res.bytes_stream();
     r.body(Body::from_stream(stream)).unwrap()
 }

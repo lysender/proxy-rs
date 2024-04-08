@@ -22,17 +22,22 @@ pub struct AppState {
 }
 
 pub async fn run(config: Config) -> Result<()> {
+    let allow_cors = config.cors;
+    let port = config.port;
+
+    // Pass configuration to the state
+    // Also pass reqwest client to allow reuse of connections
     let state = AppState {
-        config: config.clone(),
+        config,
         client: Arc::new(Client::new()),
     };
 
     let mut routes_all = Router::new()
-        .fallback_service(routes_proxy(state))
+        .merge(routes_proxy(state))
         .layer(DefaultBodyLimit::max(8000000))
         .layer(RequestBodyLimitLayer::new(8000000));
 
-    if config.cors {
+    if allow_cors {
         let cors = CorsLayer::permissive().max_age(Duration::from_secs(60) * 10);
         routes_all = routes_all.layer(cors);
     }
@@ -47,8 +52,8 @@ pub async fn run(config: Config) -> Result<()> {
 
     // Setup the server
     let ip = "127.0.0.1";
-    let addr = format!("{}:{}", ip, config.port);
-    info!("Listening on {}", addr);
+    let addr = format!("{}:{}", ip, port);
+    info!("Reverse proxy server running on {}", addr);
 
     let listener = TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, routes_all.into_make_service())
