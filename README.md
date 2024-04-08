@@ -1,6 +1,6 @@
-# Poor Man's API Proxy written in Rust
+# Reverse Proxy Server written in Rust
 
-This is a simple API proxy written in Rust to be used for local development.
+A simple reverse proxy server written in Rust intended for local development.
 
 Do not use in production (not blazingly fast).
 
@@ -9,6 +9,8 @@ Do not use in production (not blazingly fast).
 - Use axum as the web framework.
 - Use reqwest to make the requests to the target API.
 - Support for CORS (permissive mode).
+- Proxies multiple targets
+- Supports binary files like images
 - No support for websockets.
 
 ## Configuration 
@@ -16,9 +18,12 @@ Do not use in production (not blazingly fast).
 `config.toml` file is required to run the proxy.
 
 ```toml
-proxy_target_host = "example.com"
-proxy_target_secure = true
-proxy_target_path = "/api/*rest"
+targets = [
+    { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1" },
+    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets" },
+    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main" },
+]
+
 cors = true 
 port = 4200
 ```
@@ -26,7 +31,9 @@ port = 4200
 Resulting in the following proxy configuration:
 
 ```
-http://localhost:4200/api/foo/bar -> https://example.com/api/foo/bar
+http://localhost:4200/api/foo/bar -> https://example.com/api/v1/foo/bar
+http://localhost:4200/assets/img/angular.jpg -> https://example2.com/static/assets/img/angular.jpg
+http://localhost:4200/webhooks/stripe -> http://localhost:3000/webhooks/main/stripe
 ```
 
 ## Running
