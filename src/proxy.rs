@@ -10,18 +10,43 @@ use axum::{
 use reqwest::{Client, Method as ReqwestMethod, Response as ReqwestResponse};
 use std::str::FromStr;
 
-use crate::run::AppState;
+use crate::{
+    config::{Config, ProxyTarget},
+    run::AppState,
+};
 
 pub fn routes_proxy(state: AppState) -> Router {
-    let path = state.config.proxy_target_path.as_str();
     Router::new()
-        .route(path, get(handler))
-        .route(path, head(handler))
-        .route(path, post(handler))
-        .route(path, put(handler))
-        .route(path, patch(handler))
-        .route(path, delete(handler))
+        .route("/*rest", get(handler))
+        .route("/*rest", head(handler))
+        .route("/*rest", post(handler))
+        .route("/*rest", put(handler))
+        .route("/*rest", patch(handler))
+        .route("/*rest", delete(handler))
+        .route("/", get(handler))
         .with_state(state)
+}
+
+fn find_target<'a>(config: &'a Config, uri: &str) -> Option<&'a ProxyTarget> {
+    config
+        .targets
+        .iter()
+        .find(|target| uri.starts_with(&target.source_path))
+}
+
+fn default_handler(path: &str) -> Response<Body> {
+    // If no matching target, return 404
+    // If path is / but there is no target, return default home page response
+    match path {
+        "/" => Response::builder()
+            .status(StatusCode::OK)
+            .body(Body::from("<h1>API Proxy</h1>"))
+            .unwrap(),
+        _ => Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body(Body::from("<h1>Not Found</h1>"))
+            .unwrap(),
+    }
 }
 
 #[debug_handler]
@@ -32,12 +57,22 @@ async fn handler(
     method: Method,
     body: Bytes,
 ) -> Response<Body> {
+    // Detect from which target the request is for
+    // Route request to that target
+    let Some(target) = find_target(&state.config, uri.path()) else {
+        return default_handler(uri.path());
+    };
+
+    // Forward request to target
     let client = Client::new();
 
     // Build the incoming request into a reqwest request
-    let path = uri.path();
-    let host = &state.config.proxy_target_host;
-    let prefix = match state.config.proxy_target_secure {
+    let mut path = uri.path().to_string();
+    // Rewrite paths
+    path.replace_range(0..target.source_path.len(), target.dest_path.as_str());
+
+    let host = target.host.as_str();
+    let prefix = match target.secure {
         true => "https://",
         false => "http://",
     };
@@ -57,7 +92,7 @@ async fn handler(
         if let Some(name_val) = name {
             if name_val == "host" {
                 // Change origin host to target host
-                r = r.header("host", &state.config.proxy_target_host);
+                r = r.header("host", &target.host);
             } else {
                 r = r.header(name_val.as_str(), value.to_str().unwrap());
             }

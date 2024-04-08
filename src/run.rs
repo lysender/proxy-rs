@@ -12,7 +12,6 @@ use tracing::{info, Level};
 use crate::config::Config;
 use crate::error::Result;
 use crate::proxy::routes_proxy;
-use crate::web::{routes_fallback, routes_index};
 
 #[derive(Clone, FromRef)]
 pub struct AppState {
@@ -25,9 +24,7 @@ pub async fn run(config: Config) -> Result<()> {
     };
 
     let mut routes_all = Router::new()
-        .merge(routes_index(state.clone()))
-        .merge(routes_proxy(state.clone()))
-        .fallback_service(routes_fallback(state))
+        .fallback_service(routes_proxy(state))
         .layer(DefaultBodyLimit::max(8000000))
         .layer(RequestBodyLimitLayer::new(8000000));
 

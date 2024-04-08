@@ -6,7 +6,6 @@ mod config;
 mod error;
 mod proxy;
 mod run;
-mod web;
 
 #[tokio::main]
 async fn main() {
