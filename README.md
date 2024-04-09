@@ -19,10 +19,17 @@ Do not use in production (not blazingly fast).
 
 ```toml
 targets = [
-    { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1" },
-    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets" },
-    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main" },
-    { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/" },
+    # JSON API without authentication middleware
+    { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1", use_auth = false },
+
+    # Static files
+    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets", use_auth = false },
+
+    # Other endpoints
+    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main", use_auth = false },
+
+    # Use a certain endpoint as catch all proxy target
+    { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/", use_auth = false },
 ]
 
 cors = true 
@@ -37,6 +44,41 @@ http://localhost:4200/assets/img/angular.jpg -> https://example2.com/static/asse
 http://localhost:4200/webhooks/stripe -> http://localhost:3000/webhooks/main/stripe
 http://localhost:4200/ -> http://localhost:4200/
 http://localhost:4200/any/path -> http://localhost:4200/any/path
+```
+
+### Proxy Auth Middleware
+
+```toml
+# Proxy targets
+targets = [
+    # JSON API with authentication middleware
+    { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1", use_auth = true },
+
+    # Static files
+    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets", use_auth = false },
+
+    # Other endpoints
+    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main", use_auth = false },
+
+    # Use this endpoint as catch all proxy target
+    { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/", use_auth = false },
+]
+
+cors = true 
+port = 4200
+
+# Optional auth middleware
+# Before forwarding the request to target host,
+# request for authentication headers first from this server.
+# Inject the specified response headers into the request to the target host.
+# Note: header names are more likely in lowercase
+[auth]
+host = "127.0.0.1:9000"
+secure = false
+path = "/auth"
+request_headers = ["authorization"]
+response_headers = ["authorization"]
+method = "POST"
 ```
 
 ## Running

@@ -8,6 +8,9 @@ targets = [
 
     # Other endpoints
     { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main", use_auth = false },
+
+    # Use this endpoint as catch all proxy target
+    { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/", use_auth = false },
 ]
 
 cors = true 
@@ -17,6 +20,7 @@ port = 4200
 # Before forwarding the request to target host,
 # request for authentication headers first from this server.
 # Inject the specified response headers into the request to the target host
+# Note: header names are more likely in lowercase
 [auth]
 host = "127.0.0.1:9000"
 secure = false
