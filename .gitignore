@@ -1,2 +1,5 @@
 /target
 config.toml
+config-dev.toml
+config-staging.toml
+config-prod.toml
