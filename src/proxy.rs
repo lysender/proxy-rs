@@ -6,11 +6,15 @@ use axum::{
     routing::any,
     Router,
 };
-use reqwest::{Method as ReqwestMethod, Response as ReqwestResponse};
-use std::str::FromStr;
+use reqwest::{
+    header::HeaderMap as ReqwestHeaderMap, Client, Method as ReqwestMethod,
+    Response as ReqwestResponse,
+};
+use std::{str::FromStr, sync::Arc};
 
 use crate::{
-    config::{Config, ProxyTarget},
+    config::{Config, ProxyAuth, ProxyTarget},
+    error::Result,
     run::AppState,
 };
 
@@ -82,15 +86,40 @@ async fn proxy_handler(
     );
 
     // Populate headers
-    for (name, value) in headers {
-        if let Some(name_val) = name {
-            if name_val == "host" {
-                // Change origin host to target host
-                r = r.header("host", &target.host);
-            } else {
-                r = r.header(name_val.as_str(), value.to_str().unwrap());
-            }
+    for (name, value) in headers.iter() {
+        if name == "host" {
+            // Change origin host to target host
+            r = r.header("host", &target.host);
+        } else {
+            r = r.header(name, value);
         }
+    }
+
+    // Inject auth headers if specified
+    if target.use_auth {
+        let Some(auth) = &state.config.auth else {
+            return Response::builder()
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                .body(Body::from("Proxy auth config missing."))
+                .unwrap();
+        };
+
+        match fetch_auth(state.client.clone(), &headers, auth).await {
+            Ok(auth_headers) => {
+                // Inject headers from the auth response
+                for name in auth.response_headers.iter() {
+                    if let Some(value) = auth_headers.get(name) {
+                        r = r.header(name, value);
+                    }
+                }
+            }
+            Err(e) => {
+                return Response::builder()
+                    .status(StatusCode::INTERNAL_SERVER_ERROR)
+                    .body(Body::from(format!("Proxy auth error: {}", e)))
+                    .unwrap();
+            }
+        };
     }
 
     // Populate body into reqwest request
@@ -122,4 +151,32 @@ async fn build_proxy_response(res: ReqwestResponse) -> Response<Body> {
     // instead of loading them all into memory
     let stream = res.bytes_stream();
     r.body(Body::from_stream(stream)).unwrap()
+}
+
+async fn fetch_auth(
+    client: Arc<Client>,
+    headers: &HeaderMap,
+    auth: &ProxyAuth,
+) -> Result<ReqwestHeaderMap> {
+    // Build auth url
+    let host = auth.host.as_str();
+    let prefix = match auth.secure {
+        true => "https://",
+        false => "http://",
+    };
+    let url = format!("{}{}{}", prefix, host, auth.path.as_str());
+    let mut req = client.request(
+        ReqwestMethod::from_bytes(auth.method.as_str().as_bytes()).unwrap(),
+        url,
+    );
+
+    // Populate headers from the original request
+    for name in auth.request_headers.iter() {
+        if let Some(value) = headers.get(name) {
+            req = req.header(name, value.to_str().unwrap());
+        }
+    }
+
+    let res = req.send().await?;
+    Ok(res.headers().clone())
 }

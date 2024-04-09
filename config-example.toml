@@ -1,8 +1,26 @@
+# Proxy targets
 targets = [
-    { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1" },
-    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets" },
-    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main" },
+    # JSON API with authentication middleware
+    { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1", use_auth = true },
+
+    # Static files
+    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets", use_auth = false },
+
+    # Other endpoints
+    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main", use_auth = false },
 ]
 
 cors = true 
 port = 4200
+
+# Optional auth middleware
+# Before forwarding the request to target host,
+# request for authentication headers first from this server.
+# Inject the specified response headers into the request to the target host
+[auth]
+host = "127.0.0.1:9000"
+secure = false
+path = "/auth"
+request_headers = ["Authorization"]
+response_headers = ["Authorization"]
+method = "POST"
