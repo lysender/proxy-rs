@@ -6,11 +6,12 @@ Do not use in production (not blazingly fast).
 
 ## Stack and features
 
-- Use axum as the web framework.
-- Use reqwest to make the requests to the target API.
+- Use `axum` as the web framework.
+- Use `reqwest` to make the requests to the target API.
 - Support for CORS (permissive mode).
 - Proxies multiple targets
 - Supports binary files like images
+- Supports simple auth middleware
 - No support for websockets.
 
 ## Configuration 
@@ -46,7 +47,12 @@ http://localhost:4200/ -> http://localhost:4200/
 http://localhost:4200/any/path -> http://localhost:4200/any/path
 ```
 
-### Proxy Auth Middleware
+## Auth Middleware
+
+Auth middleware allows proxy to inject additional headers or replace headers
+by fetching auth data from the specified auth server, before sending it to target hosts.
+
+Note: Currently, it only supports simple GET/POST requests with no body for data.
 
 ```toml
 # Proxy targets
