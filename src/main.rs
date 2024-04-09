@@ -1,6 +1,7 @@
 use clap::Parser;
 use config::{Args, Config};
-use std::process;
+use std::{process, str::FromStr};
+use tracing::Level;
 
 mod config;
 mod error;
@@ -14,8 +15,16 @@ async fn main() {
         std::env::set_var("RUST_LOG", "proxy=info,tower_http=info")
     }
 
-    // tracing_subscriber::fmt::init();
+    let mut max_log = Level::INFO;
+    if let Some(rust_log_max) = std::env::var_os("RUST_LOG_MAX") {
+        max_log = Level::from_str(rust_log_max.to_str().unwrap()).unwrap_or_else(|e| {
+            eprintln!("Error: {}", e);
+            process::exit(1);
+        });
+    }
+
     tracing_subscriber::fmt()
+        .with_max_level(max_log)
         .with_target(false)
         .compact()
         .init();

@@ -11,6 +11,7 @@ use reqwest::{
     Response as ReqwestResponse,
 };
 use std::{str::FromStr, sync::Arc};
+use tracing::debug;
 
 use crate::{
     config::{Config, ProxyAuth, ProxyTarget},
@@ -79,6 +80,7 @@ async fn proxy_handler(
         None => "".to_string(),
     };
     let url = format!("{}{}{}{}", prefix, host, path, query);
+    debug!("Forward request to: {}", url);
 
     let mut r = client.request(
         ReqwestMethod::from_bytes(method.as_str().as_bytes()).unwrap(),
@@ -91,12 +93,23 @@ async fn proxy_handler(
             // Change origin host to target host
             r = r.header("host", &target.host);
         } else {
-            r = r.header(name, value);
+            // Exclude some headers if target user auth
+            let mut skip_header = false;
+            if let Some(auth) = &state.config.auth {
+                if auth.request_headers.contains(&name.to_string()) {
+                    skip_header = true;
+                }
+            }
+            if !skip_header {
+                r = r.header(name, value);
+            }
         }
     }
 
     // Inject auth headers if specified
     if target.use_auth {
+        debug!("Using auth middleware");
+
         let Some(auth) = &state.config.auth else {
             return Response::builder()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
@@ -106,6 +119,7 @@ async fn proxy_handler(
 
         match fetch_auth(state.client.clone(), &headers, auth).await {
             Ok(auth_headers) => {
+                debug!("Injecting auth headers.");
                 // Inject headers from the auth response
                 for name in auth.response_headers.iter() {
                     if let Some(value) = auth_headers.get(name) {
