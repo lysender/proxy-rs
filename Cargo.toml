@@ -4,7 +4,7 @@ version = "0.1.1"
 edition = "2024"
 
 [dependencies]
-axum = { version = "0.8.1", features = ["macros" ] }
+axum = { version = "0.8.1", features = ["macros", "http2" ] }
 clap = { version = "4.5.30", features = ["derive"] }
 derive_more = { version = "2.0.1", features = ["full"] }
 reqwest = { version = "0.12.12", features = ["json", "gzip", "deflate", "brotli", "stream"] }
