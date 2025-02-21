@@ -1,21 +1,21 @@
 use axum::{
+    Router,
     body::{Body, Bytes},
     extract::{OriginalUri, State},
     http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::Response,
     routing::any,
-    Router,
 };
 use reqwest::{
-    header::HeaderMap as ReqwestHeaderMap, Client, Method as ReqwestMethod,
-    Response as ReqwestResponse,
+    Client, Method as ReqwestMethod, Response as ReqwestResponse,
+    header::HeaderMap as ReqwestHeaderMap,
 };
 use std::{str::FromStr, sync::Arc};
 use tracing::debug;
 
 use crate::{
+    Result,
     config::{Config, ProxyAuth, ProxyTarget},
-    error::Result,
     run::AppState,
 };
 
@@ -191,6 +191,11 @@ async fn fetch_auth(
         }
     }
 
-    let res = req.send().await?;
-    Ok(res.headers().clone())
+    match req.send().await {
+        Ok(res) => Ok(res.headers().clone()),
+        Err(e) => {
+            let msg = format!("Failed to fetch auth: {}", e);
+            Err(msg.into())
+        }
+    }
 }

@@ -8,13 +8,10 @@ mod error;
 mod proxy;
 mod run;
 
+pub use error::{Error, Result};
+
 #[tokio::main]
 async fn main() {
-    // Set the RUST_LOG, if it hasn't been explicitly defined
-    if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "proxy=info,tower_http=info")
-    }
-
     let mut max_log = Level::INFO;
     if let Some(rust_log_max) = std::env::var_os("RUST_LOG_MAX") {
         max_log = Level::from_str(rust_log_max.to_str().unwrap()).unwrap_or_else(|e| {

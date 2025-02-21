@@ -1,27 +1,18 @@
 [package]
 name = "proxy"
-version = "0.1.0"
-edition = "2021"
-
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+version = "0.1.1"
+edition = "2024"
 
 [dependencies]
 anyhow = "1.0.75"
-axum = { version = "0.7.4", features = ["macros" ] }
-clap = { version = "4.4.6", features = ["derive"] }
-reqwest = { version = "0.12.3", features = ["json", "gzip", "deflate", "brotli", "stream"] }
-serde = { version = "1.0.197", features = ["derive"] }
-tokio = { version = "1.33.0", features = ["full"] }
-toml = "0.8.11"
-tower = "0.4.13"
-tower-http = { version = "0.5", features = ["cors", "limit", "trace"] }
-tracing = "0.1.39"
-tracing-subscriber = "0.3.17"
-
-[profile.dev]
-debug = 0
-
-[profile.release]
-lto = true
-codegen-units = 1
-panic = "abort"
+axum = { version = "0.8.1", features = ["macros" ] }
+clap = { version = "4.5.30", features = ["derive"] }
+derive_more = { version = "2.0.1", features = ["full"] }
+reqwest = { version = "0.12.12", features = ["json", "gzip", "deflate", "brotli", "stream"] }
+serde = { version = "1.0.218", features = ["derive"] }
+tokio = { version = "1.43.0", features = ["full"] }
+toml = "0.8.20"
+tower = "0.5.2"
+tower-http = { version = "0.6.2", features = ["cors", "limit", "trace"] }
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"

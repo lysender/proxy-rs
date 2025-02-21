@@ -1,18 +1,18 @@
 use std::sync::Arc;
 use std::time::Duration;
 
-use axum::extract::{DefaultBodyLimit, FromRef};
 use axum::Router;
+use axum::extract::{DefaultBodyLimit, FromRef};
 use reqwest::Client;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
 use tower_http::cors::CorsLayer;
 use tower_http::limit::RequestBodyLimitLayer;
 use tower_http::trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer};
-use tracing::{info, Level};
+use tracing::{Level, info};
 
+use crate::Result;
 use crate::config::Config;
-use crate::error::Result;
 use crate::proxy::routes_proxy;
 
 #[derive(Clone, FromRef)]

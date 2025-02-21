@@ -4,6 +4,8 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use toml;
 
+use crate::Result;
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct ProxyTarget {
     pub host: String,
@@ -32,56 +34,58 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn build(filename: &Path) -> Result<Config, &'static str> {
+    pub fn build(filename: &Path) -> Result<Config> {
         let toml_str = match fs::read_to_string(filename) {
             Ok(s) => s,
-            Err(_) => return Err("Failed to read config file."),
+            Err(_) => return Err("Failed to read config file.".into()),
         };
         let config: Config = match toml::from_str(toml_str.as_str()) {
             Ok(c) => c,
-            Err(_) => return Err("Failed to parse config file."),
+            Err(_) => return Err("Failed to parse config file.".into()),
         };
 
         // Simple validation for proxy targets
         for target in config.targets.iter() {
             if target.host.is_empty() {
-                return Err("Proxy target host is required.");
+                return Err("Proxy target host is required.".into());
             }
             if target.source_path.is_empty() {
-                return Err("Proxy target source path is required.");
+                return Err("Proxy target source path is required.".into());
             }
             if !target.source_path.starts_with("/") {
-                return Err("Proxy target source path is invalid.");
+                return Err("Proxy target source path is invalid.".into());
             }
             if target.dest_path.is_empty() {
-                return Err("Proxy target destination path is required.");
+                return Err("Proxy target destination path is required.".into());
             }
             if !target.dest_path.starts_with("/") {
-                return Err("Proxy target destination path is invalid.");
+                return Err("Proxy target destination path is invalid.".into());
             }
         }
 
         // Simple validation for proxy auth
         if let Some(auth) = &config.auth {
             if auth.host.is_empty() {
-                return Err("Proxy auth host is required.");
+                return Err("Proxy auth host is required.".into());
             }
             if auth.path.is_empty() {
-                return Err("Proxy auth path is required.");
+                return Err("Proxy auth path is required.".into());
             }
             if !auth.path.starts_with("/") {
-                return Err("Proxy auth path is invalid.");
+                return Err("Proxy auth path is invalid.".into());
             }
             if auth.response_headers.is_empty() {
-                return Err("Proxy auth response headers is required.");
+                return Err("Proxy auth response headers is required.".into());
             }
             if auth.method.is_empty() {
-                return Err("Proxy auth method is required.");
+                return Err("Proxy auth method is required.".into());
             }
             // Why would anyone use PATCH or DELETE anyway?
             let methods: Vec<&str> = vec!["GET", "POST", "HEAD", "PUT"];
             if !methods.contains(&auth.method.as_str()) {
-                return Err("Proxy auth method must be one of the following: GET, POST, HEAD, PUT");
+                return Err(
+                    "Proxy auth method must be one of the following: GET, POST, HEAD, PUT".into(),
+                );
             }
         }
         Ok(config)
