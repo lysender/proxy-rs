@@ -10,10 +10,10 @@ targets = [
     { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main", use_auth = false },
 
     # Use this endpoint as catch all proxy target
-    { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/", use_auth = false },
+    { host = "localhost:4000", secure = false, source_path = "/", dest_path = "/", use_auth = false },
 ]
 
-cors = true 
+cors = true
 port = 4200
 
 # Optional auth middleware
