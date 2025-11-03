@@ -16,6 +16,9 @@ targets = [
 cors = true
 port = 4200
 
+# When true, behaves like AWS API gateway that returns 200 OK on error responses
+ignore_errors = false
+
 # Optional auth middleware
 # Before forwarding the request to target host,
 # request for authentication headers first from this server.
