@@ -33,8 +33,11 @@ targets = [
     { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/", use_auth = false },
 ]
 
-cors = true 
+cors = true
 port = 4200
+
+# When true, behaves like AWS API gateway that returns 200 OK on error responses
+ignore_errors = false
 ```
 
 Resulting in the following proxy configuration:
@@ -70,8 +73,11 @@ targets = [
     { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/", use_auth = false },
 ]
 
-cors = true 
+cors = true
 port = 4200
+
+# When true, behaves like AWS API gateway that returns 200 OK on error responses
+ignore_errors = false
 
 # Optional auth middleware
 # Before forwarding the request to target host,

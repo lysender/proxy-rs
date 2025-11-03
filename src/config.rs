@@ -31,6 +31,7 @@ pub struct Config {
     pub auth: Option<ProxyAuth>,
     pub cors: bool,
     pub port: u16,
+    pub ignore_errors: bool,
 }
 
 impl Config {

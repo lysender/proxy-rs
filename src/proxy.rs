@@ -10,7 +10,7 @@ use reqwest::{
     Client, Method as ReqwestMethod, Response as ReqwestResponse,
     header::HeaderMap as ReqwestHeaderMap,
 };
-use std::{str::FromStr, sync::Arc};
+use std::str::FromStr;
 use tracing::debug;
 
 use crate::{
@@ -168,7 +168,7 @@ async fn build_proxy_response(res: ReqwestResponse) -> Response<Body> {
 }
 
 async fn fetch_auth(
-    client: Arc<Client>,
+    client: Client,
     headers: &HeaderMap,
     auth: &ProxyAuth,
 ) -> Result<ReqwestHeaderMap> {
