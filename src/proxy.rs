@@ -143,7 +143,7 @@ async fn proxy_handler(
 
     let response = r.send().await;
     match response {
-        Ok(res) => build_proxy_response(res).await,
+        Ok(res) => build_proxy_response(res, state.config.ignore_errors).await,
         Err(e) => Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
             .body(Body::from(format!("Error: {}", e)))
@@ -151,8 +151,12 @@ async fn proxy_handler(
     }
 }
 
-async fn build_proxy_response(res: ReqwestResponse) -> Response<Body> {
-    let mut r = Response::builder().status(res.status().as_u16());
+async fn build_proxy_response(res: ReqwestResponse, ignore_errors: bool) -> Response<Body> {
+    let mut status = res.status();
+    if !status.is_success() && ignore_errors {
+        status = StatusCode::OK;
+    }
+    let mut r = Response::builder().status(status.as_u16());
 
     // Inject headers from the remote response
     for (name, value) in res.headers() {
