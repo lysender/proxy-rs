@@ -143,7 +143,7 @@ async fn proxy_handler(
 
     let response = r.send().await;
     match response {
-        Ok(res) => build_proxy_response(res, state.config.ignore_errors).await,
+        Ok(res) => build_proxy_response(res, target.ignore_errors).await,
         Err(e) => Response::builder()
             .status(StatusCode::INTERNAL_SERVER_ERROR)
             .body(Body::from(format!("Error: {}", e)))
