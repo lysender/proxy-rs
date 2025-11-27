@@ -21,23 +21,23 @@ Do not use in production (not blazingly fast).
 ```toml
 targets = [
     # JSON API without authentication middleware
-    { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1", use_auth = false },
+    { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1", use_auth = false, ignore_errors = false },
+
+    # When ignore_errors is true, all responses will have a 200 OK status code,
+    { host = "example.com", secure = true, source_path = "/api_old", dest_path = "/api/legacy", use_auth = false, ignore_errors = true },
 
     # Static files
-    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets", use_auth = false },
+    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets", use_auth = false, ignore_errors = false },
 
     # Other endpoints
-    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main", use_auth = false },
+    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main", use_auth = false, ignore_errors = false },
 
     # Use a certain endpoint as catch all proxy target
-    { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/", use_auth = false },
+    { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/", use_auth = false, ignore_errors = false },
 ]
 
 cors = true
 port = 4200
-
-# When true, behaves like AWS API gateway that returns 200 OK on error responses
-ignore_errors = false
 ```
 
 Resulting in the following proxy configuration:
@@ -61,23 +61,20 @@ Note: Currently, it only supports simple GET/POST requests with no body for data
 # Proxy targets
 targets = [
     # JSON API with authentication middleware
-    { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1", use_auth = true },
+    { host = "example.com", secure = true, source_path = "/api", dest_path = "/api/v1", use_auth = true, ignore_errors = false },
 
     # Static files
-    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets", use_auth = false },
+    { host = "example2.com", secure = true, source_path = "/assets", dest_path = "/static/assets", use_auth = false, ignore_errors = false },
 
     # Other endpoints
-    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main", use_auth = false },
+    { host = "localhost:3000", secure = false, source_path = "/webhooks", dest_path = "/webhooks/main", use_auth = false, ignore_errors = false },
 
     # Use this endpoint as catch all proxy target
-    { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/", use_auth = false },
+    { host = "localhost:4200", secure = false, source_path = "/", dest_path = "/", use_auth = false, ignore_errors = false },
 ]
 
 cors = true
 port = 4200
-
-# When true, behaves like AWS API gateway that returns 200 OK on error responses
-ignore_errors = false
 
 # Optional auth middleware
 # Before forwarding the request to target host,

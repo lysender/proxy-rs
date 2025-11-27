@@ -13,6 +13,7 @@ pub struct ProxyTarget {
     pub source_path: String,
     pub dest_path: String,
     pub use_auth: bool,
+    pub ignore_errors: bool,
 }
 
 #[derive(Clone, Debug, Deserialize)]
@@ -31,7 +32,6 @@ pub struct Config {
     pub auth: Option<ProxyAuth>,
     pub cors: bool,
     pub port: u16,
-    pub ignore_errors: bool,
 }
 
 impl Config {
