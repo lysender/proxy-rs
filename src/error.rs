@@ -1,10 +1,7 @@
-use derive_more::From;
-
 pub type Result<T> = core::result::Result<T, Error>;
 
-#[derive(Debug, From)]
+#[derive(Debug)]
 pub enum Error {
-    #[from]
     AnyError(String),
 }
 
@@ -12,6 +9,13 @@ pub enum Error {
 impl From<&str> for Error {
     fn from(val: &str) -> Self {
         Self::AnyError(val.to_string())
+    }
+}
+
+/// Allow strings to be converted to Error
+impl From<String> for Error {
+    fn from(val: String) -> Self {
+        Self::AnyError(val)
     }
 }
 
