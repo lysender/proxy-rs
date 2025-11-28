@@ -1,7 +1,7 @@
 use axum::{
     Router,
     body::{Body, Bytes},
-    extract::{OriginalUri, State},
+    extract::{ConnectInfo, OriginalUri, State},
     http::{HeaderMap, HeaderName, HeaderValue, Method, StatusCode},
     response::Response,
     routing::any,
@@ -10,6 +10,7 @@ use reqwest::{
     Client, Method as ReqwestMethod, Response as ReqwestResponse,
     header::HeaderMap as ReqwestHeaderMap,
 };
+use std::net::SocketAddr;
 use std::str::FromStr;
 use tracing::debug;
 
@@ -54,6 +55,7 @@ async fn proxy_handler(
     OriginalUri(uri): OriginalUri,
     headers: HeaderMap,
     method: Method,
+    ConnectInfo(addr): ConnectInfo<SocketAddr>,
     body: Bytes,
 ) -> Response<Body> {
     // Detect from which target the request is for
@@ -100,6 +102,12 @@ async fn proxy_handler(
                     skip_header = true;
                 }
             }
+
+            // Will extract this header separately
+            if name == "x-forwarded-for" {
+                skip_header = true;
+            }
+
             if !skip_header {
                 r = r.header(name, value);
             }
@@ -134,6 +142,19 @@ async fn proxy_handler(
                     .unwrap();
             }
         };
+    }
+
+    // Add x-forwarded-for header
+    if let Some(forwarded_for) = headers.get("x-forwarded-for") {
+        let mut new_value = forwarded_for.to_str().unwrap().to_string();
+        if new_value.len() > 0 {
+            // Append client address
+            new_value = format!("{}, {}", new_value, addr.ip());
+            r = r.header("x-forwarded-for", new_value);
+        }
+    } else {
+        // Add client address
+        r = r.header("x-forwarded-for", addr.ip().to_string());
     }
 
     // Populate body into reqwest request

@@ -1,6 +1,7 @@
 use axum::Router;
 use axum::extract::{DefaultBodyLimit, FromRef};
 use reqwest::Client;
+use std::net::SocketAddr;
 use std::time::Duration;
 use tokio::net::TcpListener;
 use tower::ServiceBuilder;
@@ -54,10 +55,13 @@ pub async fn run(config: Config) -> Result<()> {
     info!("Reverse proxy server running on {}", addr);
 
     let listener = TcpListener::bind(addr).await.unwrap();
-    axum::serve(listener, routes_all.into_make_service())
-        .with_graceful_shutdown(shutdown_signal())
-        .await
-        .unwrap();
+    axum::serve(
+        listener,
+        routes_all.into_make_service_with_connect_info::<SocketAddr>(),
+    )
+    .with_graceful_shutdown(shutdown_signal())
+    .await
+    .unwrap();
 
     info!("HTTP server stopped");
 
